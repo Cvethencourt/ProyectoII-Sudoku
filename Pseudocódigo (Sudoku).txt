@@ -1,0 +1,73 @@
+programa Proyectosudoku;
+usa crt;
+
+variables:
+opcionjuego,userage, opciondatos: entero; 
+username, useremail: cadena [30]; 
+userphone : cadena [11]; 
+
+
+Procedimiento instrucciones;
+inicio 
+	Impeimir ('             Reglas para jugar sudoku           ');
+	Imprimir ('================================================');
+	Imprimir ('Regla 1: Hay que completar las casillas vacias  ');
+	Imprimir ('con un solo numero del 1 al 9.');
+	Imprimir ('================================================');
+	Imprimir ('Regla 2: En una misma fila no puede haber       '); 
+	Imprimir ('numeros repetidos.');
+	Imprimir ('================================================');
+	Imprimir ('Regla 3: En una misma columna no puede haber    ');
+	Imprimir ('numeros repetidos.');
+	Imprimir ('================================================');
+	Imprimir ('Regla 4: En una misma region (o recuadro de 3x3)');
+	Imprimir ('no puede haber numeros repetidos.');
+	Imprimir ('================================================');
+	Imprimir ('Regla 5: La solucion de un sudoku es unica.');
+	Imprimir ('================================================');
+fin;
+
+
+Inicio
+	Imprimir ('      Bienvenido al juego de sudoku      ');
+	Imprimir ('Por favor ingrese sus datos para comenzar');
+	Imprimir ('-----------------------------------------');
+	repetir
+		Imprimir ('Por favor ingrese su nombre');
+		Leer (username);
+		Imprimir ('Por favor ingrese su edad');
+		Leer (userage);
+		Imprimir ('Por favor ingrese su direccion de correo electronico');
+		Leer (useremail);
+		Imprimir ('Por favor ingrese su numero telefonico');
+		leer (userphone);
+		limpiar pantalla;
+		Imprimir ('Los datos ingresados son:');
+		Imprimir ('Nombre: ', username);
+		Imprimir ('Edad: ', userage);
+		Imprimir ('Correo: ', useremail);
+		Imprimir ('Telefono: ', userphone);
+		Imprimir ();
+		Imprimir ('Los datos son correctos?');
+		Imprimir ('En caso de que Si, teclee 1');
+		Imprimir ('En caso de que No, teclee 2 para editarlos');
+		Leer (opciondatos);
+	hasta que (opciondatos = 1);
+	limpiar pantalla;
+	Imprimir ('Bienvenid@ ', username);
+	Imprimir ('Indique su opcion');
+	Imprimir ('=================');
+	Imprimir ('1 = Jugar');
+	Imrpimir ('2 = Mostrar reglas');
+	Imrpimir ('3 = Salir');
+	Leer (opcionjuego);
+		caso opcionjuego de 
+			1: inicio
+			fin;
+			2: inicio
+			instrucciones;
+			fin;
+			3: inicio
+			fin;
+		fin;
+fin.
