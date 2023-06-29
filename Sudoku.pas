@@ -1,21 +1,23 @@
-program Proyectosudoku;
+program twoproyecto;
 
 uses SysUtils, crt, DateUtils;
 
 type
 TTableroSudoku = array[1..9, 1..9] of Integer;
+tablapistas = array[1..9, 1..9] of integer;
 // Definición del tipo TTableroSudoku, que representa el tablero de Sudoku
 
 var
 Sudoku: TTableroSudoku;
+tpistas: tablapistas;
 //sudoku ahora sera una variable global que almacena el table de sudoku.
-opcionjuego,opcion, userage, opciondatos: integer; 
-username, useremail:string [30]; 
+opcionjuego,opcion, opciondatos: integer; 
+username, useremail, userage:string [30]; 
 userphone : string [11]; 
 
-procedure ImprimirSudoku(const Sudoku: TTableroSudoku);
+procedure ImprimirSudoku(const Sudoku: TTableroSudoku; const tpistas: tablapistas);
 var
-i, j: Integer;
+    i, j: Integer;
 begin
     for i := 1 to 9 do
     begin
@@ -24,15 +26,31 @@ begin
 
     for j := 1 to 9 do
     begin
-    if (j = 1) or (j mod 3 = 1) then
+        if (j = 1) or (j mod 3 = 1) then
         Write('| ');
 
-    if Sudoku[i, j] = 0 then
-        Write('  ')
-    else
+      if tpistas[i, j] <> 0 then // Verificar si el valor es diferente de cero
+        begin
+        TextColor(Yellow); // Cambiar el color para las pistas
         Write(Sudoku[i, j], ' ');
+        end
+        else
+        begin
+        TextColor(White); // Restaurar el color normal
+        if Sudoku[i, j] = 0 then
+            Write('  ')
+        else
+            Write(Sudoku[i, j], ' ');
+        end;
     end;
-    Writeln;
+
+    Writeln('|');
+    
+    if i = 9 then
+    begin
+        Writeln('------------------------');
+        writeln('');
+        end;
     end;
 end;
 {Es un procedimiento que se encarga de imprimir el tablero de Sudoku en la consola.
@@ -101,48 +119,105 @@ begin
     end;
 Exit(True);
 end;
+
+function ResolverPistas(var tpistas: tablapistas): Boolean;
+var
+    Fila, Columna, Numero: Integer;
+begin
+    for Fila := 1 to 9 do
+    begin
+    for Columna := 1 to 9 do
+    begin
+        if tpistas[Fila, Columna] = 0 then
+        begin
+        for Numero := 1 to 9 do
+        begin
+            if EsNumeroValido(tpistas, Fila, Columna, Numero) then
+            begin
+            tpistas[Fila, Columna] := Numero;
+            if ResolverPistas(tpistas) then
+                Exit(True);
+            tpistas[Fila, Columna] := 0;
+            end;
+        end;
+        Exit(False);
+        end;
+    end;
+    end;
+Exit(True);
+end;
 {Es un procedimiento que genera las pistas (números iniciales) en el tablero de Sudoku.
 Basicamente las pistas se crean  apartir de un sudoku generado perfecto, el cual se crea con un algoritmo de backtracking
 Luego en un Array se localizan las posiciones de las pistas y se procede a mezclarse aleatoriamente con un ciclo for.
 luego las posiciones de las pistas se intercambian por las pistas del sudoku antes generado, y para finalizar se eliminan
 las pistas para llegar al numero de pistas deseado}
-procedure GenerarPistasSudoku(var Sudoku: TTableroSudoku; Pistas: Integer);
+function EsSudokuImposible(const Sudoku: TTableroSudoku): Boolean;
 var
-    Fila, Columna, Numero, PistasEliminadas, TotalPistas: Integer;
-    PistasAleatorias: array[1..81] of Integer; // Array para almacenar las pistas en orden aleatorio
-    i: Integer;
+    CopiaSudoku: TTableroSudoku;
+    Fila, Columna, Numero: Integer;
 begin
-  // Generar un sudoku perfecto utilizando el algoritmo de backtracking
-    ResolverSudoku(Sudoku);
-    TotalPistas := 81;
-    PistasEliminadas := 0;
-  // Crear un array con todas las posiciones de las pistas
+  // Hacemos una copia del Sudoku para no modificar el original
+    CopiaSudoku := Sudoku;
+
     for Fila := 1 to 9 do
     begin
     for Columna := 1 to 9 do
     begin
-      PistasAleatorias[PistasEliminadas + 1] := (Fila - 1) * 9 + Columna;
-        PistasEliminadas := PistasEliminadas + 1;
+      // Probamos cada número en cada celda
+        for Numero := 1 to 9 do
+        begin
+        if EsNumeroValido(CopiaSudoku, Fila, Columna, Numero) then
+        begin
+          // Si encontramos al menos una solución válida, el Sudoku no es imposible
+            Exit(False);
+        end;
+        end;
     end;
     end;
-  // Mezclar aleatoriamente las posiciones de las pistas
-    for i := TotalPistas downto 2 do
-    begin
-    Fila := Random(i) + 1;
-    Columna := Random(i) + 1;
-    // Intercambiar las posiciones de las pistas
-    Numero := PistasAleatorias[i];
-    PistasAleatorias[i] := PistasAleatorias[Fila];
-    PistasAleatorias[Fila] := Numero;
-    end;
-  // Eliminar pistas hasta alcanzar el número deseado
-    for i := 1 to PistasEliminadas - Pistas do
-    begin
-    Fila := (PistasAleatorias[i] - 1) div 9 + 1;
-    Columna := (PistasAleatorias[i] - 1) mod 9 + 1;
-    Sudoku[Fila, Columna] := 0;
-    end;
+
+  // Si ninguna combinación de números encaja en ninguna celda, el Sudoku es imposible
+    Exit(True);
 end;
+
+procedure GenerarPistasSudoku(var Sudoku: TTableroSudoku; var tpistas: tablapistas; Pistas: Integer);
+var
+    Fila, Columna, Numero, PistasGeneradas: Integer;
+begin
+    Randomize;
+
+repeat
+    // Generamos pistas aleatorias
+    for Fila := 1 to 9 do
+    begin
+    for Columna := 1 to 9 do
+    begin
+        Sudoku[Fila, Columna] := 0;
+        tpistas[Fila, Columna] := 0;  // Agregar esta línea para inicializar tpistas
+    end;
+    end;
+
+    PistasGeneradas := 0;
+    while PistasGeneradas < Pistas do
+    begin
+    Fila := Random(9) + 1;
+    Columna := Random(9) + 1;
+    Numero := Random(9) + 1;
+
+    if Sudoku[Fila, Columna] = 0 then
+    begin
+        if EsNumeroValido(Sudoku, Fila, Columna, Numero) then
+        begin
+        Sudoku[Fila, Columna] := Numero;
+          tpistas[Fila, Columna] := Numero;  // Asignar el valor a tpistas también
+        Inc(PistasGeneradas);
+        end;
+    end;
+    end;
+    
+    // Si el Sudoku es imposible de resolver con las pistas generadas, generamos nuevas pistas
+until not EsSudokuImposible(Sudoku);
+end;
+
 
 {se encarga de solicitar al usuario que ingrese una fila, columna y número para colocar en una celda del Sudoku
 Una vez obtenido la fila, la columna y el numero, se procede a validar con la funcion esNumeroValido y si es true, se ingresa en el Array del tablero.}
@@ -150,21 +225,24 @@ procedure IngresarNumero(var Sudoku: TTableroSudoku);
 var
     Fila, Columna, Numero: Integer;
 begin
-    ImprimirSudoku(Sudoku);
+    ImprimirSudoku(Sudoku, tpistas);
+    gotoxy(29, 6);
     Write('Ingresa la fila (1-9): ');
     ReadLn(Fila);
+    gotoxy(29, 7);
     Write('Ingresa la columna (1-9): ');
     ReadLn(Columna);
-    Write('Ingresa el numero (1-9): ');
+    gotoxy(29, 8);
+    Write('Ingresa el numero(1-9): ');
     ReadLn(Numero);
 
-    if EsNumeroValido(Sudoku, Fila, Columna, Numero) then
+    if EsNumeroValido(Sudoku, Fila, Columna, Numero) and (Sudoku[Fila, Columna] = 0) then
     begin
     Sudoku[Fila, Columna] := Numero;
     clrscr;
     Writeln('Número ingresado con éxito.');
     Writeln('Sudoku actualizado:');
-    ImprimirSudoku(Sudoku);
+    ImprimirSudoku(Sudoku, tpistas);
     end
     else
     begin
@@ -176,12 +254,17 @@ begin
     ReadKey;
 end;
 
-procedure Rendirse(var Sudoku: TTableroSudoku);
+procedure Rendirse(var Sudoku: TTableroSudoku; tpistas : tablapistas);
+var 
+    copiatablero : tablapistas;
 begin
-    Writeln('Te has rendido. Generando solución del Sudoku...');
+    copiatablero :=  tpistas;
+
+    Writeln('Te has rendido. Generando solucion del Sudoku...');
     Writeln('Sudoku resuelto:');
-    ResolverSudoku(Sudoku);
-    ImprimirSudoku(Sudoku);
+    ResolverPistas(copiatablero);
+    Sudoku := copiatablero;
+    ImprimirSudoku(Sudoku, tpistas);
 
     WriteLn;
     Write('Presiona cualquier tecla para continuar...');
@@ -197,30 +280,42 @@ begin
     if ResolverSudoku(Sudoku) then
     begin
         clrscr;
-        WriteLn('ganaste');
+        WriteLn ('Has logrado resolver exitosamente el sudoku');
+        Writeln ('------------- Felicidades -----------------');
+        readkey;
     end;
 end;
 
 {EL procedimiento de  borrar numero trabaja similar al del ingresarnumero, solicitando al usuario la fila y la columna de 
 el numero que quiere eliminar, y procede a cambiarlo por un 0, luego se evalua que si ese elemento(fila, columna) es = 0, se dejara un espacio vacio}
-procedure BorrarNumero(var Sudoku: TTableroSudoku);
+procedure BorrarNumero(var Sudoku: TTableroSudoku; const tpistas: tablapistas);
 var
-    Fila, Columna, Numero: Integer;
+    Fila, Columna: Integer;
 begin
-    ImprimirSudoku(Sudoku);
+    ImprimirSudoku(Sudoku, tpistas);
+    gotoxy(29, 6);
     Write('Ingresa la fila (1-9): ');
     ReadLn(Fila);
+    gotoxy(29, 6);
     Write('Ingresa la columna (1-9): ');
     ReadLn(Columna);
 
-    Sudoku[Fila, Columna] := 0;
-    if Sudoku[Fila, Columna] = 0 then
+    if tpistas[Fila, Columna] <> 0 then
     begin
-        writeln(' ');
+    gotoxy(1, 15);
+    Writeln('No se puede borrar una pista.');
+    end
+    else
+    begin
+    Sudoku[Fila, Columna] := 0;
+    gotoxy(1, 15);
+    Writeln('Número borrado con éxito.');
     end;
+
     WriteLn;
-    Write('Presiona cualquier tecla para continuar...');    
-    ReadKey;
+    gotoxy(1, 16);
+    Write('Presiona cualquier tecla para continuar...');
+    ReadLn;
 end;
 
 {La funcion de SudokuCompleto, es la mas simple de toda, simplemente se recorre todos los elementos del array, si algunas de las celdas esta vacia
@@ -249,7 +344,7 @@ begin
     Writeln('----- Sudoku -----');
     WriteLn('');
     gotoxy(1,1);
-    ImprimirSudoku(Sudoku);
+    ImprimirSudoku(Sudoku, tpistas);
     gotoxy(29, 5);
     Writeln('----------------');
     gotoxy(29, 6);
@@ -264,7 +359,10 @@ begin
     Writeln('----------------');
     gotoxy(27, 11);
     Writeln;
+    gotoxy(29, 3);
+    WriteLn('Hola ', username);
 end;
+
 Procedure instrucciones;
 Begin
 	Writeln ('             Reglas para jugar sudoku           ');
@@ -306,6 +404,7 @@ BEGIN
 		Writeln ('En caso de que No, teclee 2 para editarlos');
 		Readln (opciondatos);
 	until opciondatos = 1;
+    repeat
 	clrscr;
 	Writeln ('Bienvenid@ ', username);
 	writeln ('Indique su opcion');
@@ -318,7 +417,7 @@ BEGIN
 			1: begin
 			    clrscr;
 			    Randomize;
-                GenerarPistasSudoku(Sudoku, 17);
+                GenerarPistasSudoku(Sudoku, tpistas, 80);
 
                 repeat
                 ClrScr;
@@ -341,10 +440,10 @@ BEGIN
                 end;
                 2:begin
                     clrscr;
-                    BorrarNumero(Sudoku);
+                    BorrarNumero(Sudoku, tpistas);
                 end;  
                 3:begin
-                    Rendirse(Sudoku);
+                    Rendirse(Sudoku, tpistas);
                 end;
     end;
 
@@ -352,9 +451,13 @@ BEGIN
             until Opcion = 0;
 	end; 
 			2: begin
+            clrscr;
 			    instrucciones;
+                Write('Presiona cualquier tecla para continuar...');
+                ReadLn;
 			end;
 			3: begin
 			end;
 		end;
+        until opcionjuego = 3; 
 END.
