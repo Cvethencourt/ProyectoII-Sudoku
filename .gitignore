@@ -1,2 +1,5 @@
-.o
-.exe
+*.o
+*.exe
+tempCodeRunnerFile.pas
+Sudoku.exe
+Sudoku.o
