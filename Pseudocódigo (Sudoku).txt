@@ -1,15 +1,283 @@
-programa Proyectosudoku;
-usa crt;
+programa: Proyectosudoku;
+
+usa: SysUtils, crt, DateUtils;
+
+tipo:
+TTableroSudoku = arreglo [1..9, 1..9] de enteros;
+// Definición del tipo TTableroSudoku, que representa el tablero de Sudoku
 
 variables:
-opcionjuego,userage, opciondatos: entero; 
-username, useremail: cadena [30]; 
-userphone : cadena [11]; 
+Sudoku: TTableroSudoku;
+//sudoku ahora sera una variable global que almacena el tablero de sudoku.
+opcionjuego,opcion, userage, opciondatos: enteros; 
+username:cadena [30]; 
 
+procedimiento ImprimirSudoku(constantes: Sudoku: TTableroSudoku);
+variables: 
+i, j: enteros;
+Inicio
+    para i := 1 hasta 9 hacer
+    inicio
+    si (i = 1) o (i mod 3 = 1) entonces
+        Imprimir ('-----------------------');
 
+    para j := 1 hasta 9 hacer 
+    Inicio
+    si (j = 1) o (j mod 3 = 1) entonces 
+        Imprimir ('| ');
+
+    si Sudoku[i, j] = 0 entonces
+        Imprimir ('  ')
+    sino
+        Imprimir (Sudoku[i, j], ' ');
+    fin;
+    Imprimir;
+    fin;
+fin;
+{Es un procedimiento que se encarga de imprimir el tablero de Sudoku en la consola.
+Itera a través de las filas y columnas del tablero y muestra los números correspondientes.
+También agrega líneas horizontales y verticales para separar las regiones del Sudoku.}
+
+funcion EsNumeroValido(constantes: Sudoku: TTableroSudoku; Fila, Columna, Numero: Entero): Boleano;
+variables:
+    i, j, InicioFila, InicioColumna: Enteros ;
+Inicio
+    para i := 1 hasta 9 hacer
+    inicio 
+    si (Sudoku[Fila, i] = Numero) o (Sudoku[i, Columna] = Numero) entonces 
+        Exit(Falso);
+    fin;
+
+  InicioFila := ((Fila - 1) div 3) * 3 + 1;
+  InicioColumna := ((Columna - 1) div 3) * 3 + 1;
+
+    para i := InicioFila hasta InicioFila + 2 hacer
+    inicio
+    para j := InicioColumna hasta InicioColumna + 2 hacer
+    inicio
+        si Sudoku[i, j] = Numero entonces
+        Exit(Falso);
+        fin;
+    fin;
+
+Exit(verdadero);
+fin;
+{Es una función que verifica si un número se puede colocar en una posición específica del tablero de Sudoku sin violar las reglas del juego.
+Comprueba si el número ya existe en la misma fila, columna o región del tablero.}
+
+{De una manera explicada mas a lo convencional, el algoritmo backtracking va probando celda por celda (vacias) numeros para completar el sudoku
+esto partiendo de las reglas de no repetirse numeros en la columnas, filas o el cuadrante 3x3
+El algoritmo continúa probando diferentes números en las celdas vacías hasta que encuentra una solución completa
+o hasta que se hayan probado todas las combinaciones posibles.
+Si se encuentra una solucion completa para el sudoku, se devuelve el valor de true y si no se encuentra una solucion con todas las combinaciones posibles
+Devuelve el valor de false.
+Ademas que si en algún punto no se puede colocar ningún número válido en una celda vacía, se realiza una retrotracción (backtrack).
+Esto implica volver a la celda anterior y probar con un número diferente.}
+
+function ResolverSudoku(variables: Sudoku: TTableroSudoku): Boleano;
+variables:
+    Fila, Columna, Numero: Entero;
+Inicio
+    para Fila := 1 hasta 9 hacer
+    inicio
+    para Columna := 1 hasta 9 hacer
+    inicio
+        si Sudoku[Fila, Columna] = 0 entonces 
+        inicio
+        para Numero := 1 hasta 9 hacer
+        inicio
+            si EsNumeroValido(Sudoku, Fila, Columna, Numero) entonces
+            inicio
+            Sudoku[Fila, Columna] := Numero;
+            si ResolverSudoku(Sudoku) entonces
+                Exit(Verdadero);
+            Sudoku[Fila, Columna] := 0;
+            fin;
+        fin;
+        Exit(Falso);
+        fin;
+    fin;
+    fin;
+Exit(Verdadero);
+end;
+{Es un procedimiento que genera las pistas (números iniciales) en el tablero de Sudoku.
+Basicamente las pistas se crean  apartir de un sudoku generado perfecto, el cual se crea con un algoritmo de backtracking
+Luego en un Array se localizan las posiciones de las pistas y se procede a mezclarse aleatoriamente con un ciclo for.
+luego las posiciones de las pistas se intercambian por las pistas del sudoku antes generado, y para finalizar se eliminan
+las pistas para llegar al numero de pistas deseado}
+
+procedimiento GenerarPistasSudoku(variables: Sudoku: TTableroSudoku; Pistas: Entero);
+variables:
+    Fila, Columna, Numero, PistasEliminadas, TotalPistas: Entero;
+    PistasAleatorias: arreglo [1..81] de Integer; // Array para almacenar las pistas en orden aleatorio
+    i: Entero;
+Inicio 
+  // Generar un sudoku perfecto utilizando el algoritmo de backtracking
+    ResolverSudoku(Sudoku);
+    TotalPistas := 81;
+    PistasEliminadas := 0;
+  // Crear un array con todas las posiciones de las pistas
+    para Fila := 1 hasta 9 hacer
+    inicio
+    para Columna := 1 hasta 9 hacer
+    inicio
+      PistasAleatorias[PistasEliminadas + 1] := (Fila - 1) * 9 + Columna;
+        PistasEliminadas := PistasEliminadas + 1;
+    fin;
+    fin;
+  // Mezclar aleatoriamente las posiciones de las pistas
+    Desde i := TotalPistas hasta 2 hacer
+    Inicio
+    Fila := Random(i) + 1;
+    Columna := Random(i) + 1;
+    // Intercambiar las posiciones de las pistas
+    Numero := PistasAleatorias[i];
+    PistasAleatorias[i] := PistasAleatorias[Fila];
+    PistasAleatorias[Fila] := Numero;
+    fin;
+  // Eliminar pistas hasta alcanzar el número deseado
+    Para i := 1 hasta PistasEliminadas - Pistas hacer
+    Inicio
+    Fila := (PistasAleatorias[i] - 1) div 9 + 1;
+    Columna := (PistasAleatorias[i] - 1) mod 9 + 1;
+    Sudoku[Fila, Columna] := 0;
+    fin;
+fin;
+
+{se encarga de solicitar al usuario que ingrese una fila, columna y número para colocar en una celda del Sudoku
+Una vez obtenido la fila, la columna y el numero, se procede a validar con la funcion esNumeroValido y si es true, se ingresa en el Array del tablero.}
+
+procedimiento IngresarNumero(variables Sudoku: TTableroSudoku);
+variables
+    Fila, Columna, Numero: enteros;
+inicio
+    ImprimirSudoku(Sudoku);
+    Imprimir ('Ingresa la fila (1-9): ');
+    Leer (Fila);
+    Imprimir ('Ingresa la columna (1-9): ');
+    Leer (Columna);
+    Imprimir ('Ingresa el numero (1-9): ');
+    Leer (Numero);
+
+    si EsNumeroValido(Sudoku, Fila, Columna, Numero) entonces
+    inicio
+    Sudoku[Fila, Columna] := Numero;
+    limpiar pantalla;
+    Imprimir ('Numero ingresado con exito.');
+    Imprimir ('Sudoku actualizado:');
+    ImprimirSudoku(Sudoku);
+    fin
+    sino 
+    inicio
+    Imprimir ('Numero invalido. Intenta nuevamente.');
+    fin;
+
+    Imprimir ;
+    Imprimir ('Presiona cualquier tecla para continuar...');
+    Leer Tecla;
+fin;
+
+procedimiento Rendirse(variable Sudoku: TTableroSudoku);
+inicio
+    Imprimir ('Te has rendido. Generando solucion del Sudoku...');
+    Imprimir ('Sudoku resuelto:');
+    ResolverSudoku(Sudoku);
+    ImprimirSudoku(Sudoku);
+
+    Imprimir;
+    Imprimir ('Presiona cualquier tecla para continuar...');
+    Leer tecla;
+fin;
+
+{Los procedimientos rendirse o Ganaste, el primero es usado cuando el usuario no quiere continuar jugando, lo que hace es completar el sudoku e imprimirlo
+mientras que el procedimiento ganaste (que aun esta en desarrollo) contendra un dialogo de felicitaciones y la opcion de volver a jugar
+Nota: se tiene visualizado que el procedimiento de rendirse tiene un pequeño bug que si llega a ingresar un dato que pueda influir en el algoritmo de backtracking
+No se podra imprimir la solucion correcta, se tiene previsto como solucionarlo y en el proximo commit estara funcionando al 100%}
+
+procedure Ganaste(var Sudoku: TTableroSudoku);
+inicio
+    si ResolverSudoku(Sudoku) entonces
+    inicio
+        limpiar pantalla;
+        Imprimir ('Has logrado resolver exitosamente el sudoku');
+        Imprimir ('------------- Felicidades -----------------');
+	leer tecla;
+    fin;
+fin;
+
+{EL procedimiento de  borrar numero trabaja similar al del ingresarnumero, solicitando al usuario la fila y la columna de 
+el numero que quiere eliminar, y procede a cambiarlo por un 0, luego se evalua que si ese elemento(fila, columna) es = 0, se dejara un espacio vacio}
+
+procedimiento BorrarNumero(variable Sudoku: TTableroSudoku);
+variables:
+    Fila, Columna, Numero: Entero;
+inicio
+    ImprimirSudoku(Sudoku);
+    Imprimir ('Ingresa la fila (1-9): ');
+    Leer (Fila);
+    Imprimir ('Ingresa la columna (1-9): ');
+    Leer (Columna);
+
+    Sudoku[Fila, Columna] := 0;
+    Si Sudoku[Fila, Columna] = 0 entonces
+    inicio
+        Imprimir (' ');
+    fin ;
+    Imprimir;
+    Imprimir ('Presiona cualquier tecla para continuar...');    
+    Leer tecla;
+fin;
+
+{La funcion de SudokuCompleto, es la mas simple de toda, simplemente se recorre todos los elementos del array, si algunas de las celdas esta vacia
+el sudoku no esta completo y devuelve el valor de false, y en caso contrario devolvera el valor de true.}
+
+funcion SudokuCompleto(constante Sudoku: TTableroSudoku): Boleana;
+variable
+    Fila, Columna: entero;
+inicio
+    para Fila := 1 hasta 9 hacer
+    inicio
+    para Columna := 1 hasta 9 hacer
+    inicio 
+      // Si alguna celda está vacía (con valor 0), el Sudoku no está completo
+        si Sudoku[Fila, Columna] = 0 entonces
+        Exit(Falso);
+    fin;
+fin;
+  // Si todas las celdas tienen un valor distinto de 0, el Sudoku está completo
+    SudokuCompleto := verdadero;
+fin;
+
+{El procedimiento mostarmenu, es utilizado mostrar el menu de opcion de juegos}
+procedimiento MostrarMenu(constante Sudoku: TTableroSudoku);
+inicio
+    ir a xy (27, 1);
+    Imprimir('----- Sudoku -----');
+    Imprimir ('');
+    ir a xy(1,1);
+    ImprimirSudoku(Sudoku);
+    ir a xy (29, 4);
+    Imprimir ('----------------');
+    Ir a xy (29, 5);
+    Imprimir ('1. Ingresar numero');
+    ir a xy (29, 6);
+    Imprimir ('2. Borrar numero');
+    ir a xy (29, 7);
+    Imprimir ('3. Rendirse');
+    ir a xy (29, 8);
+    Imprimir ('0. Salir');
+    ir a xy (27, 10);
+    Imprimir ('----------------');
+    ir a xy (27, 12);
+    Imprimir;
+fin;
+
+{El procedimiento instrucciones muestra las instrucciones o reglas para resolver el sudoku
+en caso de que el usuario las solicite al programa}
 Procedimiento instrucciones;
-inicio 
-	Impeimir ('             Reglas para jugar sudoku           ');
+inicio
+	limpiar pantalla;
+	Imprimir ('             Reglas para jugar sudoku           ');
 	Imprimir ('================================================');
 	Imprimir ('Regla 1: Hay que completar las casillas vacias  ');
 	Imprimir ('con un solo numero del 1 al 9.');
@@ -25,49 +293,85 @@ inicio
 	Imprimir ('================================================');
 	Imprimir ('Regla 5: La solucion de un sudoku es unica.');
 	Imprimir ('================================================');
+	Imprimir ('');
+	Imprimir ('Presione cualquier tecla para regresar al menu');
+	leer tecla;
 fin;
 
 
-Inicio
+INICIO
+    limpiar pantalla;
 	Imprimir ('      Bienvenido al juego de sudoku      ');
 	Imprimir ('Por favor ingrese sus datos para comenzar');
 	Imprimir ('-----------------------------------------');
-	repetir
-		Imprimir ('Por favor ingrese su nombre');
+	repetir 
+		Imprimir ('Ingrese su nombre de usuario');
 		Leer (username);
-		Imprimir ('Por favor ingrese su edad');
+		Imprimir ('Ingrese su edad');
 		Leer (userage);
-		Imprimir ('Por favor ingrese su direccion de correo electronico');
-		Leer (useremail);
-		Imprimir ('Por favor ingrese su numero telefonico');
-		leer (userphone);
-		limpiar pantalla;
+		Limpiar pantalla;
 		Imprimir ('Los datos ingresados son:');
 		Imprimir ('Nombre: ', username);
 		Imprimir ('Edad: ', userage);
-		Imprimir ('Correo: ', useremail);
-		Imprimir ('Telefono: ', userphone);
 		Imprimir ();
 		Imprimir ('Los datos son correctos?');
-		Imprimir ('En caso de que Si, teclee 1');
-		Imprimir ('En caso de que No, teclee 2 para editarlos');
+		Imprimir ('En caso de que Si, presione 1');
+		Imprimir ('En caso de que No, presione 2 para editarlos');
 		Leer (opciondatos);
-	hasta que (opciondatos = 1);
+	hasta que opciondatos = 1;
+	repetir
 	limpiar pantalla;
 	Imprimir ('Bienvenid@ ', username);
 	Imprimir ('Indique su opcion');
 	Imprimir ('=================');
 	Imprimir ('1 = Jugar');
-	Imrpimir ('2 = Mostrar reglas');
-	Imrpimir ('3 = Salir');
+	Imprimir ('2 = Mostrar reglas');
+	Imprimir ('3 = Salir');
+	
 	Leer (opcionjuego);
 		caso opcionjuego de 
 			1: inicio
-			fin;
+			    limpiar pantalla;
+			    Asignar valor aleatorio;
+                GenerarPistasSudoku(Sudoku, 17);
+
+                repetir
+                Limpiar pantalla;
+                MostrarMenu(Sudoku);
+                ir a xy (27, 10);
+                Imprimir ('Selecciona una opcion: ');
+                Leer (Opcion);
+                Limpiar pantalla;
+
+                caso Opcion de
+                1:inicio
+                    limpiar pantalla;
+                    IngresarNumero(Sudoku);
+                    si SudokuCompleto(Sudoku) entonces
+                    inicio
+                        Ganaste(Sudoku);
+                        romper; // Salir del bucle
+                    fin;
+                    limpiar pantalla;
+                fin;
+                2:inicio
+                    limpiar pantala;
+                    BorrarNumero(Sudoku);
+                fin;  
+                3:inicio
+                    Rendirse(Sudoku);
+                fin;
+    fin;
+
+
+            hasta que Opcion = 0;
+	fin; 
 			2: inicio
-			instrucciones;
+			    instrucciones;
 			fin;
 			3: inicio
+			Imprimir ('Gracias por jugar');
 			fin;
 		fin;
-fin.
+	hasta que opcionjuego = 3;
+FIN.
