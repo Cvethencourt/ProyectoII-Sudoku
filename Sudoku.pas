@@ -8,10 +8,9 @@ TTableroSudoku = array[1..9, 1..9] of Integer;
 
 var
 Sudoku: TTableroSudoku;
-//sudoku ahora sera una variable global que almacena el table de sudoku.
+//sudoku ahora sera una variable global que almacena el tablero de sudoku.
 opcionjuego,opcion, userage, opciondatos: integer; 
-username, useremail:string [30]; 
-userphone : string [11]; 
+username:string [30]; 
 
 procedure ImprimirSudoku(const Sudoku: TTableroSudoku);
 var
@@ -63,11 +62,10 @@ begin
 
 Exit(True);
 end;
-
 {Es una función que verifica si un número se puede colocar en una posición específica del tablero de Sudoku sin violar las reglas del juego.
 Comprueba si el número ya existe en la misma fila, columna o región del tablero.}
 
-{De una manera explicada mas a lo conveccional, el algoritmo backtracking va probando celda por celda (vacias) numeros para completar el sudoku
+{De una manera explicada mas a lo convencional, el algoritmo backtracking va probando celda por celda (vacias) numeros para completar el sudoku
 esto partiendo de las reglas de no repetirse numeros en la columnas, filas o el cuadrante 3x3
 El algoritmo continúa probando diferentes números en las celdas vacías hasta que encuentra una solución completa
 o hasta que se hayan probado todas las combinaciones posibles.
@@ -75,6 +73,7 @@ Si se encuentra una solucion completa para el sudoku, se devuelve el valor de tr
 Devuelve el valor de false.
 Ademas que si en algún punto no se puede colocar ningún número válido en una celda vacía, se realiza una retrotracción (backtrack).
 Esto implica volver a la celda anterior y probar con un número diferente.}
+
 function ResolverSudoku(var Sudoku: TTableroSudoku): Boolean;
 var
     Fila, Columna, Numero: Integer;
@@ -106,6 +105,7 @@ Basicamente las pistas se crean  apartir de un sudoku generado perfecto, el cual
 Luego en un Array se localizan las posiciones de las pistas y se procede a mezclarse aleatoriamente con un ciclo for.
 luego las posiciones de las pistas se intercambian por las pistas del sudoku antes generado, y para finalizar se eliminan
 las pistas para llegar al numero de pistas deseado}
+
 procedure GenerarPistasSudoku(var Sudoku: TTableroSudoku; Pistas: Integer);
 var
     Fila, Columna, Numero, PistasEliminadas, TotalPistas: Integer;
@@ -146,6 +146,7 @@ end;
 
 {se encarga de solicitar al usuario que ingrese una fila, columna y número para colocar en una celda del Sudoku
 Una vez obtenido la fila, la columna y el numero, se procede a validar con la funcion esNumeroValido y si es true, se ingresa en el Array del tablero.}
+
 procedure IngresarNumero(var Sudoku: TTableroSudoku);
 var
     Fila, Columna, Numero: Integer;
@@ -162,13 +163,13 @@ begin
     begin
     Sudoku[Fila, Columna] := Numero;
     clrscr;
-    Writeln('Número ingresado con éxito.');
+    Writeln('Numero ingresado con exito.');
     Writeln('Sudoku actualizado:');
     ImprimirSudoku(Sudoku);
     end
     else
     begin
-    Writeln('Número inválido. Intenta nuevamente.');
+    Writeln('Numero invalido. Intenta nuevamente.');
     end;
 
     WriteLn;
@@ -178,7 +179,7 @@ end;
 
 procedure Rendirse(var Sudoku: TTableroSudoku);
 begin
-    Writeln('Te has rendido. Generando solución del Sudoku...');
+    Writeln('Te has rendido. Generando solucion del Sudoku...');
     Writeln('Sudoku resuelto:');
     ResolverSudoku(Sudoku);
     ImprimirSudoku(Sudoku);
@@ -189,20 +190,24 @@ begin
 end;
 
 {Los procedimientos rendirse o Ganaste, el primero es usado cuando el usuario no quiere continuar jugando, lo que hace es completar el sudoku e imprimirlo
-mientras que el procedimiento ganast (que aun esta en desarrollo) contranda un dialogo de felicitaciones y la opcion de volver a jugar
+mientras que el procedimiento ganaste (que aun esta en desarrollo) contendra un dialogo de felicitaciones y la opcion de volver a jugar
 Nota: se tiene visualizado que el procedimiento de rendirse tiene un pequeño bug que si llega a ingresar un dato que pueda influir en el algoritmo de backtracking
 No se podra imprimir la solucion correcta, se tiene previsto como solucionarlo y en el proximo commit estara funcionando al 100%}
+
 procedure Ganaste(var Sudoku: TTableroSudoku);
 begin
     if ResolverSudoku(Sudoku) then
     begin
         clrscr;
-        WriteLn('ganaste');
+        WriteLn ('Has logrado resolver exitosamente el sudoku');
+        Writeln ('------------- Felicidades -----------------');
+        readkey;
     end;
 end;
 
 {EL procedimiento de  borrar numero trabaja similar al del ingresarnumero, solicitando al usuario la fila y la columna de 
 el numero que quiere eliminar, y procede a cambiarlo por un 0, luego se evalua que si ese elemento(fila, columna) es = 0, se dejara un espacio vacio}
+
 procedure BorrarNumero(var Sudoku: TTableroSudoku);
 var
     Fila, Columna, Numero: Integer;
@@ -225,6 +230,7 @@ end;
 
 {La funcion de SudokuCompleto, es la mas simple de toda, simplemente se recorre todos los elementos del array, si algunas de las celdas esta vacia
 el sudoku no esta completo y devuelve el valor de false, y en caso contrario devolvera el valor de true.}
+
 function SudokuCompleto(const Sudoku: TTableroSudoku): Boolean;
 var
     Fila, Columna: Integer;
@@ -250,23 +256,27 @@ begin
     WriteLn('');
     gotoxy(1,1);
     ImprimirSudoku(Sudoku);
-    gotoxy(29, 5);
+    gotoxy(29, 4);
     Writeln('----------------');
-    gotoxy(29, 6);
+    gotoxy(29, 5);
     Writeln('1. Ingresar numero');
-    gotoxy(29, 7);
+    gotoxy(29, 6);
     WriteLn('2. Borrar numero');
-    gotoxy(29, 8);
+    gotoxy(29, 7);
     Writeln('3. Rendirse');
-    gotoxy(29, 9);
+    gotoxy(29, 8);
     Writeln('0. Salir');
     gotoxy(27, 10);
     Writeln('----------------');
-    gotoxy(27, 11);
+    gotoxy(27, 12);
     Writeln;
 end;
+
+{El procedimiento instrucciones muestra las instrucciones o reglas para resolver el sudoku
+en caso de que el usuario las solicite al programa}
 Procedure instrucciones;
 Begin
+	clrscr;
 	Writeln ('             Reglas para jugar sudoku           ');
 	writeln ('================================================');
 	writeln ('Regla 1: Hay que completar las casillas vacias  ');
@@ -283,6 +293,9 @@ Begin
 	writeln ('================================================');
 	writeln ('Regla 5: La solucion de un sudoku es unica.');
 	writeln ('================================================');
+	Writeln ('');
+	Writeln ('Presione cualquier tecla para regresar al menu');
+	readkey;
 End;
 
 
@@ -292,9 +305,9 @@ BEGIN
 	Writeln ('Por favor ingrese sus datos para comenzar');
 	Writeln ('-----------------------------------------');
 	repeat 
-		Writeln ('Por favor ingrese su nombre de usuario');
+		Writeln ('Ingrese su nombre de usuario');
 		Readln (username);
-		Writeln ('Por favor ingrese su edad');
+		Writeln ('Ingrese su edad');
 		Readln (userage);
 		clrscr;
 		writeln ('Los datos ingresados son:');
@@ -302,10 +315,11 @@ BEGIN
 		writeln ('Edad: ', userage);
 		Writeln ();
 		writeln ('Los datos son correctos?');
-		writeln ('En caso de que Si, teclee 1');
-		Writeln ('En caso de que No, teclee 2 para editarlos');
+		writeln ('En caso de que Si, presione 1');
+		Writeln ('En caso de que No, presione 2 para editarlos');
 		Readln (opciondatos);
 	until opciondatos = 1;
+	repeat
 	clrscr;
 	Writeln ('Bienvenid@ ', username);
 	writeln ('Indique su opcion');
@@ -313,6 +327,7 @@ BEGIN
 	writeln ('1 = Jugar');
 	Writeln ('2 = Mostrar reglas');
 	Writeln ('3 = Salir');
+	
 	Readln (opcionjuego);
 		case opcionjuego of 
 			1: begin
@@ -355,6 +370,8 @@ BEGIN
 			    instrucciones;
 			end;
 			3: begin
+			writeln ('Gracias por jugar');
 			end;
 		end;
+	until opcionjuego = 3;
 END.
